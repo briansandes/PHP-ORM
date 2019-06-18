@@ -3,6 +3,8 @@
 class DB {
     public static $_last_id;
     
+    public static $print = false;
+    
     public static $_defaultParams = [
         'charset' => 'utf8',
         'driver' => 'mysql'
@@ -89,6 +91,11 @@ class DB {
     /* $params [sql, (optional) data, (optional) connection]
      */
     public static function query($params) {
+        if(self::$print === true) {
+            var_dump($params);
+            die;
+        }
+        
         /* checks for existance of a sql query */
         if(!key_exists('sql', $params)) {
             throw new Exception('No SQL query declared.');
@@ -115,5 +122,10 @@ class DB {
             throw new Exception('Error at: '.$params['sql']);
         }
         return $result;
+    }
+    
+    /* var_dumps next executed query */
+    public static function printQuery() {
+        self::$print = true;
     }
 }

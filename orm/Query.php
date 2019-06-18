@@ -19,6 +19,10 @@ class Query {
         'delete' => [
             'sql' => 'DELETE FROM {$table} {$where} {$order_by} {$limit}',
             'params' => ['columns', 'table', 'where', 'order_by', 'limit']
+        ],
+        'truncate' => [
+            'sql' => 'TRUNCATE TABLE {$table}',
+            'params' => ['table']
         ]
     ];
 
@@ -27,19 +31,17 @@ class Query {
         'columns', 'table', 'where', 'order_by',
         'limit', 'values', 'columnsValues'
     ];
+    
 
     /* param renderers */
 
     /* columns */
-
     public static function columns($params = null) {
         /* default value */
         $columns = '*';
-
+        
         if ($params) {
-            if (key_exists('columns', $params)) {
-                $columns = join(', ', $params['columns']);
-            }
+            $columns = join(', ', $params);
         }
 
         return ['sql' => $columns];
@@ -99,6 +101,8 @@ class Query {
             /* contains $data returned by any function which returns prepared statements */
             $data = $params['data'];
             unset($params['data']);
+        } else {
+            $data = [];
         }
         
         
@@ -147,7 +151,7 @@ class Query {
     /* SELECT */
     /* $params [columns, table, where, order_by, limit] */
     public static function select($params) {
-
+        
         /* checks table parameter existance */
         if (!key_exists('table', $params)) {
             throw new Exception('Table not defined.');
@@ -157,8 +161,8 @@ class Query {
         $query = self::buildQuery('select', $params);
 
         /* prepares data if it has been provided */
-        if (key_exists('data', $query)) {
-            $query['data'] = self::prepareData($params['data']);
+        if ($query['data']) {
+            $query['data'] = self::prepareData($query['data']);
         }
 
         $result = DB::query($query);
@@ -175,11 +179,11 @@ class Query {
         }
 
         $query = self::buildQuery('insert', [
-                    'table' => $params['table'],
-                    'plain_columns' => [
-                        'data' => $params['data'],
-                        'prefix' => 'i_'
-                    ]
+            'table' => $params['table'],
+            'plain_columns' => [
+                'data' => $params['data'],
+                'prefix' => 'i_'
+            ]
         ]);
 
         $result = DB::query($query);
@@ -221,9 +225,22 @@ class Query {
         $query = self::buildQuery('delete', $params);
 
         /* prepares data if it has been provided */
-        if (key_exists('data', $query)) {
+        if ($query['data']) {
             $query['data'] = self::prepareData($params['data']);
         }
+
+        $result = DB::query($query);
+        return (bool) $result;
+    }
+    
+    public static function truncate($params) {
+        /* checks table parameter existance */
+        if (!key_exists('table', $params)) {
+            throw new Exception('Table not defined.');
+        }
+
+        /* renders query sql and data */
+        $query = self::buildQuery('truncate', $params);
 
         $result = DB::query($query);
         return (bool) $result;
